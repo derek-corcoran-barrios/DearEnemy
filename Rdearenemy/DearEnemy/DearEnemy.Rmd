@@ -1,0 +1,122 @@
+---
+title: "Dear enemy a tale of many graphs"
+author: "Derek Corcoran"
+date: "October 31, 2015"
+output: html_document
+---
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(knitr)
+library(FactoMineR)
+library(ggfortify)
+library(cluster)
+library(ggbiplot)
+library(ggdendro)
+library(ape)
+library(ggplot2)
+library(rpart)
+library(rattle)
+library(caret)
+library(dplyr)
+library (dplyr)
+library (raster)
+library (maps)
+library (maptools)
+library (rgdal)
+library (spatstat)
+#library (ETAS)
+#library (etasFLP)
+library(lubridate)
+library(ggmap)
+library(mapproj)
+library (sp)
+```
+
+#Map
+
+It all starts with the map, all the graphs made after that follow the same colour scheme
+
+```{r,echo=FALSE, message=FALSE, cache=TRUE}
+crias<-raster("/media/derek/7ABAD452BAD40C8F/Users/usuario/Documents/criasmax.asc")
+TDFext<-extent(-76.78242, -59.55606, -56.0128, -51.40127)
+criasTDF <- crop(crias, TDFext)
+criasTDF<- criasTDF*-1
+crias<-criasTDF*-1
+breaks<- c(-40,1,4,8, 82)
+breaks3<- c(-40,-10,20,50,82)
+plot(crias, breaks= breaks, col=c("chocolate4", "olivedrab", "darkorange","yellow2"), legend=FALSE)# yellow2, olivedrab, orange3, chocolate
+map.scale(x=-75.2, y=-55.8, ratio=FALSE,metric=FALSE, relwidth=0.2, cex=0.4)
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
+Formulas <- read.csv("~/Documents/Rdearenemy/Formulas.csv")
+Formulas.norm <- transmute(Formulas, Brown= Brown/sum(Brown), Green= Green/sum(Green), Yellow= Yellow/sum(Yellow), Orange= Orange/sum(Orange))
+row.names(Formulas.norm)<-Formulas[,1]
+Formulas.norm<-t(Formulas.norm)
+Groups<- row.names(Formulas.norm)
+
+```
+
+#Chemical resemblance
+
+This graph shows the chemical resemblance between the scents we developed, as it is mentioned before, the colors are the same as in the map above. The closer the scents are in this graph, the more chemicaly similar they are, Giorgia and mine are the closest, and Camila's is the most different
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
+
+autoplot(prcomp(Formulas.norm), data = Formulas.norm, colour = c("chocolate4", "olivedrab","yellow2", "darkorange"),size=10, label=TRUE, label.colour="black", label.size= 4)+ theme_bw()+ ylim(c(-0.4,0.4))+ggtitle('Chemical distance between scents')
+#autoplot(pam(ldf2[-1], 2), frame = TRUE, frame.type = 'norm')
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+b<-PCA(Formulas.norm, scale.unit = FALSE, graph = FALSE)
+Coord_smells<-b$ind$coord
+Coord_smells<-cbind(Coord_smells,Groups)
+```
+
+
+```{r,echo=FALSE, message=FALSE, cache=TRUE}
+#presen.castor <- read.csv("/media/derek/7ABAD452BAD40C8F/Users/usuario/Desktop/presen.castor.csv")
+#summary(presen.castor)
+#beav<-cbind(presen.castor[,2], presen.castor[,3])
+#plot(crias, breaks= breaks3, col=c("chocolate4", "olivedrab", "darkorange","yellow2"), legend=TRUE)# yellow2, olivedrab, orange3,chocolate
+#points(beav, pch=21, bg="red", cex=0.5)
+#beav<-data.frame(cbind(beav,extract(crias,beav)))
+#colnames(beav)<-c("lon", "lat", "fit")
+#summary(beav)
+#beav.yellow<-filter(beav, fit >= 8)
+#beav<-filter(beav,fit < 8)
+#beav.orange<- filter(beav, fit >= 4)
+#beav<-filter(beav,fit < 4)
+#beav.green<- filter(beav, fit >= 1)
+#beav.yellow
+#plot(crias, breaks= breaks, col=c("chocolate4", "olivedrab", "darkorange","yellow2"), legend=FALSE)# yellow2, olivedrab, orange3,chocolate
+#points(beav.yellow, pch=21, bg="gold", cex=0.5)
+#plot(crias, breaks= breaks, col=c("chocolate4", "olivedrab", "darkorange","yellow2"), legend=FALSE)# yellow2, olivedrab, orange3,chocolate
+#points(beav.orange, pch=21, bg= "orange", cex=0.5)
+#plot(crias, breaks= breaks, col=c("chocolate4", "olivedrab", "darkorange","yellow2"), legend=FALSE)# yellow2, olivedrab, orange3,chocolate
+#points(beav.green, pch=21, bg= "green", cex= 0.5)
+```
+
+```{r, echo=FALSE, cache=TRUE}
+#map <- get_map(location = "Tierra del fuego",zoom=7 )
+#map <-ggmap(map)+ geom_point(aes(x=lon, y=lat), color="orange", size = 2, alpha=0.5, data= beav.orange)  + geom_point(aes(x=lon, y=lat), color="yellow", size = 2, alpha=0.5, data= beav.yellow) + geom_point(aes(x=lon, y=lat), color="green", size = 2, alpha=0.5, data= beav.green)
+#map
+```
+
+#Popularity contest
+
+The votes for scent mounds and years are shown in the following graphs, of course for the timeline we don't have the colors, but we can work on the texts
+
+```{r, echo=FALSE, cache=TRUE}
+barmounds <- read.csv("~/Documents/Rdearenemy/barmounds.csv")
+barplot(barmounds$Votes, col=c("chocolate4", "olivedrab", "darkorange","yellow2"), names.arg=c("Brown", "Green", "Orange","Yellow"), main="People's choice of scent mounds")
+
+Timeline <- read.csv("~/Documents/Rdearenemy/Timeline.csv")
+attach(Timeline)
+plot(Year, Votes, ylim=c(0,12), xlim=c(1940,2020), main="People's choice of Years", type="b")
+text(Year, Votes, labels=Year, cex= 0.8, pos=3)
+text(Year, Votes, labels=c("Beavers introduced","Beavers in Navarino", "Beavers in the continent", "Can be hunted", "Are problematic", "Their meat is yummy!", "Treaty", "Beavers roam"), cex= 0.8, pos=1)
+detach(Timeline)
+```
